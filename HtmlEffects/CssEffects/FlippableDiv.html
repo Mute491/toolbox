@@ -1,0 +1,96 @@
+<html>
+
+	<head>
+		<title>test</title>
+		
+		<style>
+			
+			body{
+			
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			
+			}
+		
+			.card-container{
+			
+				width: 70%;
+				height: 70%;
+			}
+			
+			.card{
+			
+				width: 70%;
+				height: 70%;
+				transform-style: preserve-3d;
+				transition: transform 300ms;
+			
+			}
+			
+			
+			.card:hover{
+				transform: rotateY(180deg);
+				transition-delay: 500ms;
+			}
+			
+			.front{
+			
+				width:	100%;
+				height: 100%;
+				background-color:blue;
+				
+			}
+			
+			.back{
+				width:	100%;
+				height: 100%;
+				transform: rotateY(180deg);
+				background-color:red;
+			
+			}
+			
+			.back, .front{
+				position: absolute;
+				backface-visibility: hidden;
+				-webkit-backface-visibility: hidden;
+			
+			}
+			
+			.card:hover .back{
+				transform: rotateY(180deg);
+				transition-delay: 500ms;
+				
+			}
+			
+			
+			
+			
+		
+		</style>
+		
+	</head>
+
+	<body>
+	
+		<div class="card-container">
+			
+			
+			<div class="card">
+			
+				<div class="front">
+					<h1>avanti</h1>
+				</div>
+				
+				<div class="back">
+					<h1>dietro</h1>
+				</div>
+			
+			</div>
+			
+			
+		</div>
+	
+	</body>
+
+</html>
