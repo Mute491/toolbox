@@ -1,46 +1,107 @@
-<script>
+<html>
 
-  
-    dragElement(document.getElementById("header"));
+	<head>
+		<title>test</title>
+		
+		<style>
+			
+			.popup{
+			
+				position: absolute;
+				top: 25%;
+				left: 25%;
+				width: 400px;
+				height: 400px;
+				background-color: lightgray;
+				
+			}
+			
+			.popup-header{
+			
+				width:100%;
+				height:15%;
+				background-color: black;
+				cursor: grab;
+			
+			}
+		
+		</style>
+		
+		
+		<script>
  
-    function dragElement(elmnt) {
-        var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        elmnt.onmousedown = dragMouseDown;
+			function dragElement(elmnt) {
+				var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+				elmnt.onmousedown = dragMouseDown;
  
-        function dragMouseDown(e) {
-            e = e || window.event;
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            document.onmousemove = elementDrag;
-        }
+				function dragMouseDown(e) {
+					e = e || window.event;
+					e.preventDefault();
+					pos3 = e.clientX;
+					pos4 = e.clientY;
+					document.onmouseup = closeDragElement;
+					document.onmousemove = elementDrag;
+				}
  
-        function elementDrag(e) {
-            e = e || window.event;
-            e.preventDefault();
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
+				function elementDrag(e) {
+					e = e || window.event;
+					e.preventDefault();
+					pos1 = pos3 - e.clientX;
+					pos2 = pos4 - e.clientY;
+					pos3 = e.clientX;
+					pos4 = e.clientY;
  
-            // Calcola le nuove posizioni
-            var newTop = elmnt.parentElement.offsetTop - pos2;
-            var newLeft = elmnt.parentElement.offsetLeft - pos1;
+					// Calcola le nuove posizioni
+					var newTop = elmnt.parentElement.offsetTop - pos2;
+					var newLeft = elmnt.parentElement.offsetLeft - pos1;
  
-            // Limita le nuove posizioni ai confini della finestra
-            if (newTop < 0) newTop = 0;
-            if (newLeft < 0) newLeft = 0;
-            if (newTop + elmnt.parentElement.offsetHeight > window.innerHeight) newTop = window.innerHeight - elmnt.parentElement.offsetHeight;
-            if (newLeft + elmnt.parentElement.offsetWidth > window.innerWidth) newLeft = window.innerWidth - elmnt.parentElement.offsetWidth;
+					// Limita le nuove posizioni ai confini della finestra
+					if (newTop < 0) newTop = 0;
+					if (newLeft < 0) newLeft = 0;
+					if (newTop + elmnt.parentElement.offsetHeight > window.innerHeight) newTop = window.innerHeight - elmnt.parentElement.offsetHeight;
+					if (newLeft + elmnt.parentElement.offsetWidth > window.innerWidth) newLeft = window.innerWidth - elmnt.parentElement.offsetWidth;
  
-            elmnt.parentElement.style.top = newTop + "px";
-            elmnt.parentElement.style.left = newLeft + "px";
-        }
+					elmnt.parentElement.style.top = newTop + "px";
+					elmnt.parentElement.style.left = newLeft + "px";
+				}
  
-        function closeDragElement() {
-            document.onmouseup = null;
-            document.onmousemove = null;
-        }
-    }
-</script>
+				function closeDragElement() {
+					document.onmouseup = null;
+					document.onmousemove = null;
+				}
+			}
+	
+		</script>
+		
+	</head>
+
+	<body>
+	
+		<div>
+		
+			<div class="popup">
+			
+				<div class="popup-header" id="header">
+				</div>
+				
+				<div class="popup-body">
+					
+					<h3>Body div</h3>
+					
+				</div>
+				
+			</div>
+		
+		</div>
+	
+	<script>
+		
+		var header = document.getElementById("header");
+		
+		dragElement(header);
+		
+	</script>
+	
+	</body>
+
+</html>
