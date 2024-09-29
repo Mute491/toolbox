@@ -1,6 +1,9 @@
 <?php
 // Nome del file in cui salvare i dati
-$filename = 'shell.txt';
+
+$shellNo = $_POST["shellNo"];
+
+$filename = 'shell'.$shellNo.'.txt';
 
 // Verifica se il parametro POST 'output' è stato inviato
 if (isset($_POST['output'])) {
