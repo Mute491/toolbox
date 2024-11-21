@@ -12,7 +12,7 @@
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
-//g++ -m32 -O2 -static-libgcc -static-libstdc++ -o reverseshell.exe reverseshell.cpp -mwindows -lwininet
+//g++ -m32 -O2 -static-libgcc -static-libstdc++ -o reverseshell.exe ReverseShellWin.cpp -mwindows -lwininet
 
 using namespace std;
 
